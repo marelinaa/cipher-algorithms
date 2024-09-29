@@ -1,13 +1,15 @@
-package main
+package verify
 
 import (
 	"fmt"
 	"unicode"
+
+	"github.com/marelinaa/cipher-algorithms/keys"
 )
 
-// verifyAlphabet checks the alphabet for accuracy.
+// Alphabet checks the alphabet for accuracy.
 // If alphabet is correct, creates map with alphabet characters as keys and numerical representations as values.
-func verifyAlphabet(alphabet string) (map[rune]int, error) {
+func Alphabet(alphabet string) (map[rune]int, error) {
 	if alphabet == "" {
 		return nil, fmt.Errorf("alphabet can not be empty")
 	}
@@ -26,8 +28,8 @@ func verifyAlphabet(alphabet string) (map[rune]int, error) {
 	return alphabetMap, nil
 }
 
-// verifyText checks the text for accuracy
-func verifyText(text string, alphabetMap map[rune]int) error {
+// Text checks the text for accuracy
+func Text(text string, alphabetMap map[rune]int) error {
 	if text == "" {
 		return fmt.Errorf("text can not be empty")
 	}
@@ -42,7 +44,7 @@ func verifyText(text string, alphabetMap map[rune]int) error {
 	return nil
 }
 
-func verifyCaesarKey(key string) (int, error) {
+func CaesarKey(key string, alphabetMap map[rune]int) (int, error) {
 	keyRunes := []rune(key)
 	if len(keyRunes) != 1 {
 		return -1, fmt.Errorf("caesar key must contain one symbol from the alphabet")
@@ -56,7 +58,30 @@ func verifyCaesarKey(key string) (int, error) {
 	return k, nil
 }
 
-func isControl(r rune) bool {
+func AffineKey(key string, alphabetMap map[rune]int) (keys.Affine, error) {
+	keyRunes := []rune(key)
+	if len(keyRunes) != 2 {
+		return keys.Affine{}, fmt.Errorf("affine key must be a pair of symbols from the alphabet, witout delimiters")
+	}
+
+	k1, ok := alphabetMap[keyRunes[0]]
+	if !ok {
+		return keys.Affine{}, fmt.Errorf("affine key must be a pair of symbols from the alphabet, witout delimiters")
+	}
+	k2, ok := alphabetMap[keyRunes[1]]
+	if !ok {
+		return keys.Affine{}, fmt.Errorf("affine key must be a pair of symbols from the alphabet, witout delimiters")
+	}
+
+	affineKey := keys.Affine{
+		K1: k1,
+		K2: k2,
+	}
+
+	return affineKey, nil
+}
+
+func IsControl(r rune) bool {
 	cs := []rune{'\a', '\b', '\f', '\n', '\r', '\t', '\v'}
 
 	for _, c := range cs {
@@ -68,7 +93,7 @@ func isControl(r rune) bool {
 	return false
 }
 
-func containsControlCharacter(s string) bool {
+func ContainsControlCharacter(s string) bool {
 	for _, r := range s {
 		if unicode.IsControl(r) {
 			return true
