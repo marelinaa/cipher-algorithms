@@ -37,10 +37,16 @@ func openAndExtractText(fileName string) (string, error) {
 
 	// read the first line from the file using a scanner
 	scanner := bufio.NewScanner(file)
-	scanner.Scan()
-	text = scanner.Text()
-	if err := scanner.Err(); err != nil {
-		return "", err
+	i := 1
+	for scanner.Scan() {
+		if i != 1 {
+			return "", fmt.Errorf("file %s has more than one row", fileName)
+		}
+		text = scanner.Text()
+		if err := scanner.Err(); err != nil {
+			return "", err
+		}
+		i++
 	}
 
 	return text, nil
