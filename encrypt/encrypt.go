@@ -2,8 +2,8 @@ package encrypt
 
 import "github.com/marelinaa/cipher-algorithms/keys"
 
-// CaesarEncrypt осуществляет шифрование Цезаря с использованием символа-ключа
-func CaesarEncrypt(input string, key int, alphabetMap map[rune]int, power int) string {
+// Caesar осуществляет шифрование Цезаря с использованием символа-ключа
+func Caesar(input string, key int, alphabetMap map[rune]int, power int) string {
 	reverseAlphabetMap := make(map[int]rune)
 
 	// Создаем мапу: числовое представление - символ алфавита
@@ -26,7 +26,7 @@ func CaesarEncrypt(input string, key int, alphabetMap map[rune]int, power int) s
 	return string(encryptedText)
 }
 
-func AffineEncrypt(input string, key keys.Affine, alphabetMap map[rune]int, power int) string {
+func Affine(input string, key keys.Affine, alphabetMap map[rune]int, power int) string {
 	reverseAlphabetMap := make(map[int]rune)
 
 	// Создаем мапу: числовое представление - символ алфавита

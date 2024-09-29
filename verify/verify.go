@@ -58,19 +58,37 @@ func CaesarKey(key string, alphabetMap map[rune]int) (int, error) {
 	return k, nil
 }
 
+func gcd(a, b int) int {
+	if b == 0 {
+		return a
+	} else {
+		return gcd(b, a%b)
+	}
+}
+
+func areCoprime(a, b int) bool {
+	// If the GCD of two numbers is 1, they are coprime
+	return gcd(a, b) == 1
+}
+
 func AffineKey(key string, alphabetMap map[rune]int) (keys.Affine, error) {
+	err := "affine key must be a pair of symbols from the alphabet, witout delimiters"
 	keyRunes := []rune(key)
 	if len(keyRunes) != 2 {
-		return keys.Affine{}, fmt.Errorf("affine key must be a pair of symbols from the alphabet, witout delimiters")
+		return keys.Affine{}, fmt.Errorf(err)
 	}
 
 	k1, ok := alphabetMap[keyRunes[0]]
 	if !ok {
-		return keys.Affine{}, fmt.Errorf("affine key must be a pair of symbols from the alphabet, witout delimiters")
+		return keys.Affine{}, fmt.Errorf(err)
 	}
 	k2, ok := alphabetMap[keyRunes[1]]
 	if !ok {
-		return keys.Affine{}, fmt.Errorf("affine key must be a pair of symbols from the alphabet, witout delimiters")
+		return keys.Affine{}, fmt.Errorf(err)
+	}
+
+	if !areCoprime(k1, k2) {
+		return keys.Affine{}, fmt.Errorf("numeric representations of symbols must be coprime")
 	}
 
 	affineKey := keys.Affine{

@@ -151,9 +151,9 @@ func main() {
 				continue
 			}
 			if operationChoice == 1 {
-				result = encrypt.CaesarEncrypt(input, key, alphabetMap, power)
+				result = encrypt.Caesar(input, key, alphabetMap, power)
 			} else {
-				result = decrypt.CaesarDecrypt(input, key, alphabetMap, power)
+				result = decrypt.Caesar(input, key, alphabetMap, power)
 			}
 		case 2:
 			key, err := verify.AffineKey(keyString, alphabetMap)
@@ -163,9 +163,9 @@ func main() {
 			}
 			// Affine cipher
 			if operationChoice == 1 {
-				result = encrypt.AffineEncrypt(input, key, alphabetMap, power)
+				result = encrypt.Affine(input, key, alphabetMap, power)
 			} else {
-				result = affineDecrypt(input, keyString)
+				result = decrypt.Affine(input, key, alphabetMap, power)
 			}
 		case 3:
 			// Шифр простой замены
