@@ -10,13 +10,16 @@ import (
 
 const (
 	errorString     = "error: %v"
-	alphabetFile    = "alphabet.txt"
-	textFile        = "text.txt"
 	defaultAlphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ "
+	alphabetFile    = "alphabet.txt"
+	textFile        = "in.txt"
+	keyFile         = "key.txt"
 )
 
 var (
-	text string
+	alphabetMap map[rune]int
+	power       int
+	text        string
 )
 
 // openAndExtractText opens the file with. Returns the first line from that file
@@ -65,19 +68,33 @@ func verifyAlphabet(alphabet string) (map[rune]int, error) {
 }
 
 // verifyText checks the text for accuracy
-func verifyText(text string, alphMap map[rune]int) error {
+func verifyText(text string, alphabetMap map[rune]int) error {
 	if text == "" {
 		return fmt.Errorf("text can not be empty")
 	}
 
 	for _, char := range text {
-		_, ok := alphMap[char] // check if the text contains allowable characters
+		_, ok := alphabetMap[char] // check if the text contains allowable characters
 		if !ok {
 			return fmt.Errorf("text contains characters not from the alphabet")
 		}
 	}
 
 	return nil
+}
+
+func verifyCaesarKey(key string) (int, error) {
+	keyRunes := []rune(key)
+	if len(keyRunes) != 1 {
+		return -1, fmt.Errorf("key must contain one symbol from the alphabet")
+	}
+
+	k, ok := alphabetMap[keyRunes[0]]
+	if !ok {
+		return -1, fmt.Errorf("key must contain one symbol from the alphabet")
+	}
+
+	return k, nil
 }
 
 func main() {
@@ -89,12 +106,12 @@ func main() {
 	}
 
 	// check the alphabet for accuracy and make map of alphabet characters
-	alphabetMap, err := verifyAlphabet(alphabet)
+	alphabetMap, err = verifyAlphabet(alphabet) //todo:global var or pass to func
 	if err != nil {
 		log.Fatalf(errorString, err)
 	}
 
-	power := utf8.RuneCountInString(alphabet) // power of the alphabet
+	power = utf8.RuneCountInString(alphabet) // power of the alphabet
 	fmt.Printf("Your alphabet: %s It's power: %d\n", alphabet, power)
 
 	// open the file with the text
@@ -108,4 +125,19 @@ func main() {
 	if err != nil {
 		log.Fatalf(errorString, err)
 	}
+
+	//todo: implement choosing ciphering method
+
+	// open the file with the key
+	keyString, err := openAndExtractText(keyFile)
+	if err != nil {
+		log.Fatalf(errorString, err)
+	}
+
+	key, err := verifyCaesarKey(keyString)
+	if err != nil {
+		log.Fatalf(errorString, err)
+	}
+	fmt.Println(key)
+
 }
