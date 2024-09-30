@@ -3,6 +3,7 @@ package verify
 import (
 	"fmt"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/marelinaa/cipher-algorithms/keys"
 )
@@ -56,6 +57,34 @@ func CaesarKey(key string, alphabetMap map[rune]int) (int, error) {
 	}
 
 	return k, nil
+}
+
+func SubstitutionKey(key string, alphabetMap map[rune]int, power int) ([]int, error) {
+	var keyInt []int
+	seen := make(map[rune]bool) // to track repeated characters
+	// Ensure key has the same length as the alphabet
+	if utf8.RuneCountInString(key) != power {
+		return nil, fmt.Errorf("key must be the same length as the alphabet")
+	}
+
+	for _, r := range key {
+		// сheck if the character is from the alphabet
+		k, ok := alphabetMap[r]
+		if !ok {
+			return nil, fmt.Errorf("key must contain symbols from the alphabet")
+		}
+
+		// сheck for duplicate characters
+		_, i := seen[r]
+		if i {
+			return nil, fmt.Errorf("key contains duplicate symbol: '%c'", r)
+		}
+		seen[r] = true
+
+		keyInt = append(keyInt, k)
+	}
+
+	return keyInt, nil
 }
 
 func gcd(a, b int) int {
@@ -118,4 +147,40 @@ func ContainsControlCharacter(s string) bool {
 		}
 	}
 	return false
+}
+
+func PermutationKey(keyString string, alphabetMap map[rune]int, power int) ([]int, error) {
+	if utf8.RuneCountInString(keyString) > power {
+		return nil, fmt.Errorf("key length exceeds the maximum allowed length of %d", power)
+	}
+	seen := make(map[rune]bool)
+	var key []int
+
+	for i, char := range keyString {
+		// Проверяем, есть ли символ в алфавите
+		if _, ok := alphabetMap[char]; !ok {
+			return nil, fmt.Errorf("key contains invalid symbol: '%c'", char)
+		}
+
+		// Проверяем дублирование символов в ключе
+		if seen[char] {
+			return nil, fmt.Errorf("key contains duplicate symbol: '%c'", char)
+		}
+		seen[char] = true
+
+		// Порядок перестановки символов согласно ключу
+		key = append(key, i)
+	}
+
+	return key, nil
+}
+
+func VigenereKey(keyString string, alphabetMap map[rune]int, power int) error {
+	for _, char := range keyString {
+		if _, ok := alphabetMap[char]; !ok {
+			return fmt.Errorf("key contains invalid symbol (not from the alphabet): '%c'", char)
+		}
+	}
+
+	return nil
 }

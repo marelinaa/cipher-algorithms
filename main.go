@@ -112,12 +112,14 @@ func main() {
 		fmt.Println("2: Affine cipher")
 		fmt.Println("3: Simple substitution cipher")
 		fmt.Println("4: Hill cipher")
+		fmt.Println("5: Permutation cipher")
+		fmt.Println("6: Vigenere cipher")
 		fmt.Println("0: Exit")
 
 		var cipherChoice int
 		for {
 			fmt.Scan(&cipherChoice)
-			if cipherChoice >= 0 && cipherChoice <= 4 {
+			if cipherChoice >= 0 && cipherChoice <= 6 {
 				break
 			}
 			fmt.Println("the wrong choice of cryptosystem, try again:")
@@ -168,18 +170,47 @@ func main() {
 				result = decrypt.Affine(input, key, alphabetMap, power)
 			}
 		case 3:
-			// Шифр простой замены
+			key, err := verify.SubstitutionKey(keyString, alphabetMap, power)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			// Simple substitution
 			if operationChoice == 1 {
-				result = substitutionEncrypt(input, keyString)
+				result = encrypt.Substitution(input, key, alphabetMap, power)
 			} else {
-				result = substitutionDecrypt(input, keyString)
+				result = decrypt.Substitution(input, []rune(keyString), alphabetMap, power)
 			}
 		case 4:
-			// Шифр Хилла
+			// Hill cipher
 			if operationChoice == 1 {
 				result = hillEncrypt(input, keyString)
 			} else {
 				result = hillDecrypt(input, keyString)
+			}
+		case 5:
+			key, err := verify.PermutationKey(keyString, alphabetMap, power)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			// Permutation cipher
+			if operationChoice == 1 {
+				result = encrypt.Permutation(input, key, len(key))
+			} else {
+				result = decrypt.Permutation(input, key, len(key))
+			}
+		case 6:
+			err := verify.VigenereKey(keyString, alphabetMap, power)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			// Vigenere cipher
+			if operationChoice == 1 {
+				result = encrypt.Vigenere(input, keyString, alphabetMap, power)
+			} else {
+				result = decrypt.Vigenere(input, keyString, alphabetMap, power)
 			}
 		default:
 			fmt.Println("Wrong choise")
@@ -190,17 +221,12 @@ func main() {
 	}
 }
 
-func affineDecrypt(input, key string) string {
-	// Реализация дешифрования аффинного шифра
-	return input
-}
-
-func substitutionEncrypt(input, key string) string {
+func permutationEncrypt(input string, key []int, alphabetMap map[rune]int, power int) string {
 	// Реализация шифра простой замены
 	return input
 }
 
-func substitutionDecrypt(input, key string) string {
+func permutationDecrypt(input string, key []int, alphabetMap map[rune]int, power int) string {
 	// Реализация дешифрования шифра простой замены
 	return input
 }
