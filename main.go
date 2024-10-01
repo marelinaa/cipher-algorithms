@@ -18,6 +18,8 @@ const (
 	alphabetFile    = "alphabet.txt"
 	textFile        = "in.txt"
 	keyFile         = "key.txt"
+	encryptFile     = "encrypt.txt"
+	decryptFile     = "encrypt.txt"
 )
 
 var (
@@ -56,6 +58,17 @@ func openAndExtractText(fileName string) (string, error) {
 	}
 
 	return text, nil
+}
+
+func WriteToFile(fileName, text string) {
+	file, err := os.Create(fileName)
+	if err != nil {
+		fmt.Println("unable to create file:", err)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	file.WriteString(text)
 }
 
 func initializeData() (string, error) {
@@ -154,8 +167,11 @@ func main() {
 			}
 			if operationChoice == 1 {
 				result = encrypt.Caesar(input, key, alphabetMap, power)
+				WriteToFile(encryptFile, result)
+
 			} else {
 				result = decrypt.Caesar(input, key, alphabetMap, power)
+				WriteToFile(decryptFile, result)
 			}
 		case 2:
 			key, err := verify.AffineKey(keyString, alphabetMap)
@@ -166,8 +182,10 @@ func main() {
 			// Affine cipher
 			if operationChoice == 1 {
 				result = encrypt.Affine(input, key, alphabetMap, power)
+				WriteToFile(encryptFile, result)
 			} else {
 				result = decrypt.Affine(input, key, alphabetMap, power)
+				WriteToFile(decryptFile, result)
 			}
 		case 3:
 			key, err := verify.SubstitutionKey(keyString, alphabetMap, power)
@@ -178,15 +196,20 @@ func main() {
 			// Simple substitution
 			if operationChoice == 1 {
 				result = encrypt.Substitution(input, key, alphabetMap, power)
+				WriteToFile(encryptFile, result)
 			} else {
 				result = decrypt.Substitution(input, []rune(keyString), alphabetMap, power)
+				WriteToFile(decryptFile, result)
+
 			}
 		case 4:
 			// Hill cipher
 			if operationChoice == 1 {
 				result = hillEncrypt(input, keyString)
+				WriteToFile(encryptFile, result)
 			} else {
 				result = hillDecrypt(input, keyString)
+				WriteToFile(decryptFile, result)
 			}
 		case 5:
 			key, err := verify.PermutationKey(keyString, alphabetMap, power)
@@ -197,8 +220,10 @@ func main() {
 			// Permutation cipher
 			if operationChoice == 1 {
 				result = encrypt.Permutation(input, key, len(key))
+				WriteToFile(encryptFile, result)
 			} else {
 				result = decrypt.Permutation(input, key, len(key))
+				WriteToFile(decryptFile, result)
 			}
 		case 6:
 			err := verify.VigenereKey(keyString, alphabetMap, power)
@@ -209,15 +234,15 @@ func main() {
 			// Vigenere cipher
 			if operationChoice == 1 {
 				result = encrypt.Vigenere(input, keyString, alphabetMap, power)
+				WriteToFile(encryptFile, result)
 			} else {
 				result = decrypt.Vigenere(input, keyString, alphabetMap, power)
+				WriteToFile(decryptFile, result)
 			}
 		default:
 			fmt.Println("Wrong choise")
 			continue
 		}
-
-		fmt.Printf("Result: %s\n\n", result)
 	}
 }
 
