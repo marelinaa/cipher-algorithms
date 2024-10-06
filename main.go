@@ -19,7 +19,7 @@ const (
 	textFile        = "in.txt"
 	keyFile         = "key.txt"
 	encryptFile     = "encrypt.txt"
-	decryptFile     = "encrypt.txt"
+	decryptFile     = "decrypt.txt"
 )
 
 var (
@@ -212,17 +212,17 @@ func main() {
 				WriteToFile(decryptFile, result)
 			}
 		case 5:
-			key, err := verify.PermutationKey(keyString, alphabetMap, power)
+			err := verify.PermutationKey(keyString, alphabetMap, power)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 			// Permutation cipher
 			if operationChoice == 1 {
-				result = encrypt.Permutation(input, key, len(key))
+				result = encrypt.Permutation(input, keyString)
 				WriteToFile(encryptFile, result)
 			} else {
-				result = decrypt.Permutation(input, key, len(key))
+				result = decrypt.Permutation(input, keyString)
 				WriteToFile(decryptFile, result)
 			}
 		case 6:

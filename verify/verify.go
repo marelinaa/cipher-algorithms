@@ -149,30 +149,26 @@ func ContainsControlCharacter(s string) bool {
 	return false
 }
 
-func PermutationKey(keyString string, alphabetMap map[rune]int, power int) ([]int, error) {
+func PermutationKey(keyString string, alphabetMap map[rune]int, power int) error {
 	if utf8.RuneCountInString(keyString) > power {
-		return nil, fmt.Errorf("key length exceeds the maximum allowed length of %d", power)
+		return fmt.Errorf("key length exceeds the maximum allowed length of %d", power)
 	}
 	seen := make(map[rune]bool)
-	var key []int
 
-	for i, char := range keyString {
+	for _, char := range keyString {
 		// Проверяем, есть ли символ в алфавите
 		if _, ok := alphabetMap[char]; !ok {
-			return nil, fmt.Errorf("key contains invalid symbol: '%c'", char)
+			return fmt.Errorf("key contains invalid symbol: '%c'", char)
 		}
 
 		// Проверяем дублирование символов в ключе
 		if seen[char] {
-			return nil, fmt.Errorf("key contains duplicate symbol: '%c'", char)
+			return fmt.Errorf("key contains duplicate symbol: '%c'", char)
 		}
 		seen[char] = true
-
-		// Порядок перестановки символов согласно ключу
-		key = append(key, i)
 	}
 
-	return key, nil
+	return nil
 }
 
 func VigenereKey(keyString string, alphabetMap map[rune]int, power int) error {

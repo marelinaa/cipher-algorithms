@@ -2,6 +2,7 @@ package decrypt
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -81,23 +82,68 @@ func Substitution(input string, key []rune, alphabetMap map[rune]int, power int)
 	return string(decryptedText)
 }
 
-func Permutation(input string, key []int, blockLen int) string {
-	var result []rune
+// Функция расшифрования методом перестановки с паролем
+func Permutation(input, keyword string) string {
+	cols := utf8.RuneCountInString(keyword)
+	rows := utf8.RuneCountInString(input) / cols
 
-	// Разбиваем текст на блоки длины ключа
-	for i := 0; i < len(input); i += blockLen {
-		block := []rune(input[i : i+blockLen])
-		decryptedBlock := make([]rune, blockLen)
+	if utf8.RuneCountInString(input)%cols != 0 {
+		fmt.Println("the length of the ciphertext must be a multiple of the length of the key")
 
-		// Обратная перестановка символов в блоке
-		for j, pos := range key {
-			decryptedBlock[pos] = block[j]
-		}
-
-		result = append(result, decryptedBlock...)
+		return ""
 	}
 
-	return string(result)
+	// Заполняем таблицу зашифрованного текста
+	sortedTable := make([][]rune, rows)
+	for i := range sortedTable {
+		sortedTable[i] = make([]rune, cols)
+	}
+
+	// Добавляем буквы зашифрованного текста в таблицу
+	for i, r := range input {
+		row := i / cols
+		col := i % cols
+		sortedTable[row][col] = r
+	}
+
+	// Добавляем буквы пароля в таблицу
+	keywordRunes := []rune(keyword)
+	colOrder := make([]int, len(keywordRunes))
+	for i := range keywordRunes {
+		colOrder[i] = i
+	}
+
+	// Сортируем индексы столбцов по алфавиту
+	sort.Slice(colOrder, func(i, j int) bool {
+		return keywordRunes[colOrder[i]] < keywordRunes[colOrder[j]]
+	})
+
+	// Создаем обратный порядок для расшифровки
+	inverseColOrder := make([]int, len(colOrder))
+	for i, col := range colOrder {
+		inverseColOrder[col] = i
+	}
+
+	// Восстанавливаем оригинальную таблицу
+	originalTable := make([][]rune, rows)
+	for i := range originalTable {
+		originalTable[i] = make([]rune, cols)
+		for j, col := range inverseColOrder {
+			originalTable[i][j] = sortedTable[i][col]
+		}
+	}
+
+	// Извлекаем исходный текст, проходя по строкам
+	var originalText strings.Builder
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			if originalTable[i][j] != 0 {
+				originalText.WriteRune(originalTable[i][j])
+			}
+		}
+	}
+
+	return originalText.String()
 }
 
 func Vigenere(input string, key string, alphabetMap map[rune]int, power int) string {

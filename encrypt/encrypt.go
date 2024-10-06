@@ -2,6 +2,7 @@ package encrypt
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -77,33 +78,91 @@ func Substitution(input string, key []int, alphabetMap map[rune]int, power int) 
 	return string(encryptedText)
 }
 
-func Permutation(input string, key []int, blockLen int) string {
-	var result []rune
+// func Permutation(input string, keyString string, key []int, alphabetMap map[rune]int, blockLen int) string {
+// 	var result []rune
+// 	reverseAlphabetMap := make(map[int]rune)
 
-	// Добавляем паддинг, если длина текста не кратна длине ключа
-	if len(input)%blockLen != 0 {
-		paddingLen := blockLen - (len(input) % blockLen)
-		paddingChar := rune('X') // Символ паддинга
+// 	for char, index := range alphabetMap {
+// 		reverseAlphabetMap[index] = char
+// 	}
+
+// 	// если длина текста не кратна длине ключа
+// 	if utf8.RuneCountInString(input)%blockLen != 0 {
+// 		paddingLen := blockLen - (len(input) % blockLen)
+// 		paddingChar := rune('X')
+// 		for i := 0; i < paddingLen; i++ {
+// 			input += string(paddingChar)
+// 		}
+// 	}
+
+// 	sort.Ints(key)
+
+// 	for n := range key {
+// 		char := reverseAlphabetMap[n]
+// 		ind :=
+// 	}
+
+// 	return string(result)
+// }
+
+// Функция для шифрования методом перестановки с паролем
+func Permutation(input, keyword string) string {
+	cols := utf8.RuneCountInString(keyword)
+	paddingLen := cols - (utf8.RuneCountInString(input) % cols)
+	rows := (utf8.RuneCountInString(input) + paddingLen) / cols
+
+	if utf8.RuneCountInString(input)%cols != 0 {
+		paddingLen := cols - (utf8.RuneCountInString(input) % cols)
+		paddingChar := rune('X') //todo:change
 		for i := 0; i < paddingLen; i++ {
 			input += string(paddingChar)
 		}
 	}
 
-	// Разбиваем текст на блоки длины ключа
-	for i := 0; i < len(input); i += blockLen {
-		block := []rune(input[i : i+blockLen])
-		encryptedBlock := make([]rune, blockLen)
-
-		// Перестановка символов в блоке по порядку ключа
-		for j, pos := range key {
-			// Уменьшаем на 1, если ключ начинается с 1
-			encryptedBlock[j] = block[pos-1]
-		}
-
-		result = append(result, encryptedBlock...)
+	// Заполняем таблицу текста
+	table := make([][]rune, rows)
+	for i := range table {
+		table[i] = make([]rune, cols)
 	}
 
-	return string(result)
+	for i, r := range input {
+		row := i / cols
+		col := i % cols
+		table[row][col] = r
+	}
+
+	// Добавляем буквы пароля в таблицу
+	keywordRunes := []rune(keyword)
+	colOrder := make([]int, len(keywordRunes))
+	for i := range keywordRunes {
+		colOrder[i] = i
+	}
+
+	// Сортируем индексы столбцов по алфавиту
+	sort.Slice(colOrder, func(i, j int) bool {
+		return keywordRunes[colOrder[i]] < keywordRunes[colOrder[j]]
+	})
+
+	// Переставляем столбцы в таблице
+	sortedTable := make([][]rune, rows)
+	for i := range sortedTable {
+		sortedTable[i] = make([]rune, cols)
+		for j, col := range colOrder {
+			sortedTable[i][j] = table[i][col]
+		}
+	}
+
+	// Создаем шифротекст, проходя по строкам
+	var cipherText strings.Builder
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			if sortedTable[i][j] != 0 { // Игнорируем пустые ячейки
+				cipherText.WriteRune(sortedTable[i][j])
+			}
+		}
+	}
+
+	return cipherText.String()
 }
 
 func Vigenere(input string, key string, alphabetMap map[rune]int, power int) string {
