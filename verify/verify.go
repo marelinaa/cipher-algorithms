@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"errors"
 	"fmt"
 	"unicode"
 	"unicode/utf8"
@@ -147,6 +148,57 @@ func ContainsControlCharacter(s string) bool {
 		}
 	}
 	return false
+}
+
+func determinant2x2(key [2][2]int) int {
+	k11 := key[0][0]
+	k12 := key[0][1]
+	k21 := key[1][0]
+	k22 := key[1][1]
+
+	fmt.Println(k11, k12, k21, k22)
+
+	return (k11*k22 - k12*k21)
+}
+
+func HillKey(keyString string, alphabetMap map[rune]int, power int) ([2][2]int, error) {
+	var key [2][2]int
+	var keyNum []int
+
+	for _, r := range keyString {
+		// Проверка, является ли символ буквой из алфавита
+		i, ok := alphabetMap[r]
+		if !ok {
+			return [2][2]int{}, fmt.Errorf("key must contain symbols from the alphabet")
+		}
+
+		keyNum = append(keyNum, i)
+	}
+
+	fmt.Println(keyNum)
+
+	index := 0
+	for i := 0; i < len(key); i++ {
+		for j := 0; j < len(key[i]); j++ {
+			key[i][j] = keyNum[index]
+			index++
+		}
+	}
+
+	det := determinant2x2(key)
+	if det == 0 {
+		return [2][2]int{}, errors.New("matrix determinant is zero, key is not invertible")
+	}
+
+	if !areCoprime(det, power) {
+		return [2][2]int{}, errors.New("matrix determinant must be coprime with power of the alphabet, key is not invertible")
+	}
+
+	// _, err := modInverse(det, power)
+	// if err != nil {
+	// 	return errors.New("key is not invertible")
+	// }
+	return key, nil
 }
 
 func PermutationKey(keyString string, alphabetMap map[rune]int, power int) error {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/marelinaa/cipher-algorithms/encrypt"
 	"github.com/marelinaa/cipher-algorithms/keys"
+	"golang.org/x/exp/rand"
 )
 
 // Caesar осуществляет дешифрование Цезаря
@@ -171,4 +172,48 @@ func Vigenere(input string, key string, alphabetMap map[rune]int, power int) str
 	}
 
 	return decrypted.String()
+}
+
+func randomRune(alphabetMap map[rune]int, power int) rune {
+	var alphabet []rune
+	for r, count := range alphabetMap {
+		for i := 0; i < count; i++ {
+			alphabet = append(alphabet, r)
+		}
+	}
+
+	i := rand.Intn(power - 1)
+	return alphabet[i]
+}
+
+func hillEncryptPair(k11, k12, k21, k22, p1, p2, power int) (int, int) {
+	c1 := (k11*p1 + k21*p2) % power
+	c2 := (k12*p1 + k22*p2) % power
+	return c1, c2
+}
+
+func Hill(input string, key [2][2]int, alphabetMap map[rune]int, power int) string {
+	reverseAlphabetMap := make(map[int]rune)
+	for char, idx := range alphabetMap {
+		reverseAlphabetMap[idx] = char
+	}
+
+	input = strings.ToUpper(input)
+	if utf8.RuneCountInString(input)%2 != 0 {
+		rand := randomRune(alphabetMap, power)
+		input += string(rand) // Добавляем символ для выравнивания
+	}
+
+	var ciphertext strings.Builder
+	text := []rune(input)
+	for i := 0; i < utf8.RuneCountInString(input); i += 2 {
+		p1 := alphabetMap[text[i]]
+		p2 := alphabetMap[text[i+1]]
+
+		c1, c2 := hillEncryptPair(key[0][0], key[0][1], key[1][0], key[1][1], p1, p2, power)
+		ciphertext.WriteRune(reverseAlphabetMap[c1])
+		ciphertext.WriteRune(reverseAlphabetMap[c2])
+	}
+
+	return ciphertext.String()
 }

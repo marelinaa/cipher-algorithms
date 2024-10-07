@@ -203,9 +203,14 @@ func main() {
 
 			}
 		case 4:
+			key, err := verify.HillKey(keyString, alphabetMap, power)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 			// Hill cipher
 			if operationChoice == 1 {
-				result = hillEncrypt(input, keyString)
+				result = encrypt.Hill(input, key, alphabetMap, power)
 				WriteToFile(encryptFile, result)
 			} else {
 				result = hillDecrypt(input, keyString)
@@ -219,7 +224,7 @@ func main() {
 			}
 			// Permutation cipher
 			if operationChoice == 1 {
-				result = encrypt.Permutation(input, keyString)
+				result = encrypt.Permutation(input, keyString, alphabetMap, power)
 				WriteToFile(encryptFile, result)
 			} else {
 				result = decrypt.Permutation(input, keyString)
@@ -244,21 +249,6 @@ func main() {
 			continue
 		}
 	}
-}
-
-func permutationEncrypt(input string, key []int, alphabetMap map[rune]int, power int) string {
-	// Реализация шифра простой замены
-	return input
-}
-
-func permutationDecrypt(input string, key []int, alphabetMap map[rune]int, power int) string {
-	// Реализация дешифрования шифра простой замены
-	return input
-}
-
-func hillEncrypt(input, key string) string {
-	// Реализация шифра Хилла
-	return input
 }
 
 func hillDecrypt(input, key string) string {
