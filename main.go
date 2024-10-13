@@ -111,6 +111,8 @@ func initializeData() (string, error) {
 
 func main() {
 
+	//fmt.Println()
+
 	keyString, err := initializeData()
 	if err != nil {
 		log.Fatalf("error during initialization: %v", err)
@@ -174,7 +176,7 @@ func main() {
 				WriteToFile(decryptFile, result)
 			}
 		case 2:
-			key, err := verify.AffineKey(keyString, alphabetMap)
+			key, err := verify.AffineKey(keyString, alphabetMap, power)
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -213,7 +215,7 @@ func main() {
 				result = encrypt.Hill(input, key, alphabetMap, power)
 				WriteToFile(encryptFile, result)
 			} else {
-				result = hillDecrypt(input, keyString)
+				result = decrypt.Hill(input, key, alphabetMap, power)
 				WriteToFile(decryptFile, result)
 			}
 		case 5:
@@ -249,9 +251,4 @@ func main() {
 			continue
 		}
 	}
-}
-
-func hillDecrypt(input, key string) string {
-	// Реализация дешифрования шифра Хилла
-	return input
 }

@@ -1,6 +1,7 @@
 package decrypt
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -16,9 +17,9 @@ func Caesar(input string, key int, alphabetMap map[rune]int, power int) string {
 	return encrypt.Caesar(input, -key, alphabetMap, power)
 }
 
-func modInverse(a, m int) int {
+func ModInverse(a, m int) int {
 	for x := 1; x < m; x++ {
-		if (a*x)%m == 0 {
+		if (a*x)%m == 1 {
 			return x
 		}
 	}
@@ -35,7 +36,7 @@ func Affine(input string, key keys.Affine, alphabetMap map[rune]int, power int) 
 	}
 
 	// Find modular inverse of key.K1
-	k1Inverse := modInverse(key.K1, power)
+	k1Inverse := ModInverse(key.K1, power)
 	if k1Inverse == -1 {
 		panic("K1 has no modular inverse, decryption is not possible!")
 	}
@@ -186,6 +187,40 @@ func randomRune(alphabetMap map[rune]int, power int) rune {
 	return alphabet[i]
 }
 
+func determinant2x2(key [2][2]int) int {
+	k11 := key[0][0]
+	k12 := key[0][1]
+	k21 := key[1][0]
+	k22 := key[1][1]
+
+	return (k11*k22 - k12*k21)
+}
+
+func inverseMatrix(key [2][2]int, power int) ([2][2]int, error) {
+	det := determinant2x2(key)
+
+	if det == 0 {
+		return [2][2]int{}, errors.New("Matrix is singular, no inverse exists")
+	}
+
+	invDet := ModInverse(det, power) // Модульное обратное определителя, предполагая, что работаем в поле 26
+	if invDet == -1 {
+		return [2][2]int{}, errors.New("No modular inverse found for determinant")
+	}
+
+	a := key[0][0]
+	b := key[0][1]
+	c := key[1][0]
+	d := key[1][1]
+
+	inv := [2][2]int{
+		{d * invDet % 26, (-b) * invDet % power},
+		{(-c) * invDet % 26, a * invDet % power},
+	}
+
+	return inv, nil
+}
+
 func hillEncryptPair(k11, k12, k21, k22, p1, p2, power int) (int, int) {
 	c1 := (k11*p1 + k21*p2) % power
 	c2 := (k12*p1 + k22*p2) % power
@@ -193,6 +228,14 @@ func hillEncryptPair(k11, k12, k21, k22, p1, p2, power int) (int, int) {
 }
 
 func Hill(input string, key [2][2]int, alphabetMap map[rune]int, power int) string {
+	fmt.Println(key)
+	key, err := inverseMatrix(key, power)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(key)
+
 	reverseAlphabetMap := make(map[int]rune)
 	for char, idx := range alphabetMap {
 		reverseAlphabetMap[idx] = char

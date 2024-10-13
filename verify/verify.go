@@ -101,7 +101,7 @@ func areCoprime(a, b int) bool {
 	return gcd(a, b) == 1
 }
 
-func AffineKey(key string, alphabetMap map[rune]int) (keys.Affine, error) {
+func AffineKey(key string, alphabetMap map[rune]int, power int) (keys.Affine, error) {
 	err := "affine key must be a pair of symbols from the alphabet, witout delimiters"
 	keyRunes := []rune(key)
 	if len(keyRunes) != 2 {
@@ -117,7 +117,9 @@ func AffineKey(key string, alphabetMap map[rune]int) (keys.Affine, error) {
 		return keys.Affine{}, fmt.Errorf(err)
 	}
 
-	if !areCoprime(k1, k2) {
+	fmt.Println(k1, k2)
+
+	if !areCoprime(k1, power) {
 		return keys.Affine{}, fmt.Errorf("numeric representations of symbols must be coprime")
 	}
 
@@ -166,7 +168,6 @@ func HillKey(keyString string, alphabetMap map[rune]int, power int) ([2][2]int, 
 	var keyNum []int
 
 	for _, r := range keyString {
-		// Проверка, является ли символ буквой из алфавита
 		i, ok := alphabetMap[r]
 		if !ok {
 			return [2][2]int{}, fmt.Errorf("key must contain symbols from the alphabet")
@@ -208,12 +209,10 @@ func PermutationKey(keyString string, alphabetMap map[rune]int, power int) error
 	seen := make(map[rune]bool)
 
 	for _, char := range keyString {
-		// Проверяем, есть ли символ в алфавите
 		if _, ok := alphabetMap[char]; !ok {
 			return fmt.Errorf("key contains invalid symbol: '%c'", char)
 		}
 
-		// Проверяем дублирование символов в ключе
 		if seen[char] {
 			return fmt.Errorf("key contains duplicate symbol: '%c'", char)
 		}
