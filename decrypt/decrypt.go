@@ -87,18 +87,15 @@ func Substitution(input string, key []rune, alphabetMap map[rune]int, power int)
 
 func Permutation(input, keyword string, alphabetMap map[rune]int) string {
 	cols := utf8.RuneCountInString(keyword)
-	paddingLen := cols - (utf8.RuneCountInString(input) % cols)
-	rows := (utf8.RuneCountInString(input) + paddingLen) / cols
-	// Проверяем, нужно ли добавить символы для выравнивания
+	rows := utf8.RuneCountInString(input) / cols
+
 	if utf8.RuneCountInString(input)%cols != 0 {
 		log.Println("длина шифртекста не кратна длине ключа")
 	}
 
-	// Получаем порядок перестановки
 	order := getKeywordOrder(keyword, alphabetMap)
 	fmt.Println("Порядок перестановки:", order)
 
-	// Получаем обратный порядок перестановки
 	reverseOrder := make([]int, len(order))
 	for i, pos := range order {
 		reverseOrder[pos] = i

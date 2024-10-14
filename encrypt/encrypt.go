@@ -90,10 +90,15 @@ func randomRune(alphabetMap map[rune]int, power int) rune {
 func Permutation(input, keyword string, alphabetMap map[rune]int, power int) string {
 	cols := utf8.RuneCountInString(keyword)
 	paddingLen := cols - (utf8.RuneCountInString(input) % cols)
-	rows := (utf8.RuneCountInString(input) + paddingLen) / cols
+	rows := utf8.RuneCountInString(input) / cols
+	if utf8.RuneCountInString(input)%cols != 0 {
+		rows = (utf8.RuneCountInString(input) + paddingLen) / cols
+	}
+
 	fmt.Println(rows, cols)
 
 	if utf8.RuneCountInString(input)%cols != 0 {
+		fmt.Println("я тут")
 		paddingChar := randomRune(alphabetMap, power)
 		for i := 0; i < paddingLen; i++ {
 			input += string(paddingChar)
