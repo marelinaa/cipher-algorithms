@@ -168,31 +168,29 @@ func rearrangeRow(row []rune, order []int) []rune {
 	return rearranged
 }
 
-func Vigenere(input string, key string, alphabetMap map[rune]int, power int) string {
-	var decrypted strings.Builder
-
-	keyIndex := 0
-	for _, char := range input {
-		if _, ok := alphabetMap[char]; !ok {
-			decrypted.WriteString(string(char))
-			continue
-		}
-
-		keyLen := utf8.RuneCountInString(key)
-		keyChar := rune(key[keyIndex%keyLen])
-		shift := (alphabetMap[char] - alphabetMap[keyChar] + power) % power
-
-		for letter, index := range alphabetMap {
-			if index == shift {
-				decrypted.WriteString(string(letter))
-				break
-			}
-		}
-
-		keyIndex++
+func Vigenere(ciphertext string, key string, alphabet map[rune]int) string {
+	alphabetLength := len(alphabet)
+	reverseMap := make(map[int]rune)
+	for char, index := range alphabet {
+		reverseMap[index] = char
 	}
 
-	return decrypted.String()
+	keyLength := len(key)
+	keyIndices := make([]int, keyLength)
+	for i, char := range key {
+		keyIndices[i] = alphabet[char]
+	}
+
+	decryptedText := make([]rune, 0)
+
+	for i, char := range ciphertext {
+		c := alphabet[char]
+		k := keyIndices[i%keyLength]
+		decryptedCharIndex := (c - k + alphabetLength) % alphabetLength
+		decryptedText = append(decryptedText, reverseMap[decryptedCharIndex])
+	}
+
+	return string(decryptedText)
 }
 
 func randomRune(alphabetMap map[rune]int, power int) rune {

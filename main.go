@@ -243,10 +243,10 @@ func main() {
 			}
 			// Vigenere cipher
 			if operationChoice == 1 {
-				result = encrypt.Vigenere(input, keyString, alphabetMap, power)
+				result = encrypt.Vigenere(input, keyString, alphabetMap)
 				WriteToFile(encryptFile, result)
 			} else {
-				result = decrypt.Vigenere(input, keyString, alphabetMap, power)
+				result = decrypt.Vigenere(input, keyString, alphabetMap)
 				WriteToFile(decryptFile, result)
 			}
 		default:

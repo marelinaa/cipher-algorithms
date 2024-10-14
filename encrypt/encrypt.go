@@ -170,31 +170,29 @@ func rearrangeRow(row []rune, order []int) []rune {
 	return rearranged
 }
 
-func Vigenere(input string, key string, alphabetMap map[rune]int, power int) string {
-	var encrypted strings.Builder
-
-	keyIndex := 0
-	for _, char := range input {
-		if _, ok := alphabetMap[char]; !ok {
-			encrypted.WriteString(string(char))
-			continue
-		}
-
-		keyLen := utf8.RuneCountInString(key)
-		keyChar := rune(key[keyIndex%keyLen])
-		shift := (alphabetMap[keyChar] + alphabetMap[char]) % power
-
-		for letter, index := range alphabetMap {
-			if index == shift {
-				encrypted.WriteString(string(letter))
-				break
-			}
-		}
-
-		keyIndex++
+func Vigenere(plaintext string, key string, alphabet map[rune]int) string {
+	alphabetLength := len(alphabet)
+	reverseMap := make(map[int]rune)
+	for char, index := range alphabet {
+		reverseMap[index] = char
 	}
 
-	return encrypted.String()
+	keyLength := len(key)
+	keyIndices := make([]int, keyLength)
+	for i, char := range key {
+		keyIndices[i] = alphabet[char]
+	}
+
+	encryptedText := make([]rune, 0)
+
+	for i, char := range plaintext {
+		p := alphabet[char]
+		k := keyIndices[i%keyLength]
+		encryptedCharIndex := (p + k) % alphabetLength
+		encryptedText = append(encryptedText, reverseMap[encryptedCharIndex])
+	}
+
+	return string(encryptedText)
 }
 
 // Функция для нахождения обратного числа по модулю
