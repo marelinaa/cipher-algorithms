@@ -207,14 +207,14 @@ func randomRune(alphabetMap map[rune]int, power int) rune {
 	return alphabet[i]
 }
 
-func determinant2x2(key [2][2]int) int {
-	k11 := key[0][0]
-	k12 := key[0][1]
-	k21 := key[1][0]
-	k22 := key[1][1]
+// func determinant2x2(key [2][2]int) int {
+// 	k11 := key[0][0]
+// 	k12 := key[0][1]
+// 	k21 := key[1][0]
+// 	k22 := key[1][1]
 
-	return (k11*k22 - k12*k21)
-}
+// 	return (k11*k22 - k12*k21)
+// }
 
 func k1Inverse(k1, M int) (int, error) {
 	k1 = k1 % M
@@ -227,31 +227,31 @@ func k1Inverse(k1, M int) (int, error) {
 	return -1, errors.New("no modular inverse found for determinant")
 }
 
-func inverseMatrix(key [2][2]int, power int) ([2][2]int, error) {
-	det := determinant2x2(key)
+// func inverseMatrix(key [2][2]int, power int) ([2][2]int, error) {
+// 	det := determinant2x2(key)
 
-	if det == 0 {
-		return [2][2]int{}, errors.New("matrix is singular, no inverse exists")
-	}
+// 	if det == 0 {
+// 		return [2][2]int{}, errors.New("matrix is singular, no inverse exists")
+// 	}
 
-	// invDet, err := k1Inverse(det, power)
-	// if err != nil {
-	// 	return [2][2]int{}, err
-	// }
+// 	// invDet, err := k1Inverse(det, power)
+// 	// if err != nil {
+// 	// 	return [2][2]int{}, err
+// 	// }
 
-	a := key[0][0]
-	b := key[0][1]
-	c := key[1][0]
-	d := key[1][1]
+// 	a := key[0][0]
+// 	b := key[0][1]
+// 	c := key[1][0]
+// 	d := key[1][1]
 
-	inv := [2][2]int{
-		{Mod(d, power), -Mod(b, power)},
-		{-Mod(c, power), Mod(a, power)},
-	}
-	fmt.Println(inv)
+// 	inv := [2][2]int{
+// 		{Mod(d, power), -Mod(b, power)},
+// 		{-Mod(c, power), Mod(a, power)},
+// 	}
+// 	fmt.Println(inv)
 
-	return inv, nil
-}
+// 	return inv, nil
+// }
 
 func Mod(x, y int) int {
 	if x < 0 {
@@ -263,12 +263,12 @@ func Mod(x, y int) int {
 	return x - (x/y)*y
 }
 
-func hillEncryptPair(k11, k12, k21, k22, p1, p2, power int) (int, int) {
-	c1 := Mod(k11*p1+k21*p2, power)
-	c2 := Mod(k12*p1+k22*p2, power)
+// func hillEncryptPair(k11, k12, k21, k22, p1, p2, power int) (int, int) {
+// 	c1 := Mod(k11*p1+k21*p2, power)
+// 	c2 := Mod(k12*p1+k22*p2, power)
 
-	return c1, c2
-}
+// 	return c1, c2
+// }
 
 func gcd(a, b int) int {
 	if b == 0 {
