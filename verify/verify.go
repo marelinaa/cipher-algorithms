@@ -3,6 +3,7 @@ package verify
 import (
 	"errors"
 	"fmt"
+	"math"
 	"unicode"
 	"unicode/utf8"
 
@@ -119,22 +120,27 @@ func SubstitutionKey(key string, alphabetMap map[rune]int, power int) ([]int, er
 }
 
 func gcd(a, b int) int {
-	switch {
-	case a == 0 && b == 0:
-		return 0
-	case a == 0:
+	// Работаем с абсолютными значениями
+	a = int(math.Abs(float64(a)))
+	b = int(math.Abs(float64(b)))
+
+	if a == 0 {
 		return b
-	case b == 0:
-		return a
-	case a%b == 0:
-		return b
-	case b%a == 0:
-		return a
-	case a > b:
-		return gcd(a%b, b)
 	}
 
-	return gcd(a, b%a)
+	if b == 0 {
+		return a
+	}
+
+	for a != b {
+		if a > b {
+			a -= b
+		} else {
+			b -= a
+		}
+	}
+
+	return a
 }
 
 func areCoprime(a, b int) bool {
@@ -173,6 +179,17 @@ func determinant2x2(key [2][2]int) int {
 	return (k11*k22 - k12*k21)
 }
 
+func Mod(x, y int) int {
+	if x < 0 {
+		a := -x / y
+		fmt.Println(a)
+
+		return ((a)+1)*y + x
+	}
+
+	return x - (x/y)*y
+}
+
 func HillKey(keyString string, alphabetMap map[rune]int, power int) ([2][2]int, error) {
 	var key [2][2]int
 	var keyNum []int
@@ -207,11 +224,26 @@ func HillKey(keyString string, alphabetMap map[rune]int, power int) ([2][2]int, 
 		return [2][2]int{}, errors.New("matrix determinant must be coprime with power of the alphabet, key is not invertible")
 	}
 
+	// if Mod(det, power) != 1 {
+	// 	return [2][2]int{}, errors.New("matrix determinant must be coprime with power of the alphabet, key is not invertible")
+	// }
+
 	// _, err := modInverse(det, power)
 	// if err != nil {
 	// 	return errors.New("key is not invertible")
 	// }
 	return key, nil
+}
+
+func k1Inverse(k1, M int) int {
+	k1 = k1 % M
+	for i := 1; i < M; i++ {
+		if (k1*i)%M == 1 {
+			return i
+		}
+	}
+
+	return -1
 }
 
 func PermutationKey(keyString string, alphabetMap map[rune]int, power int) error {

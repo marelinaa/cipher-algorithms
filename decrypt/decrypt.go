@@ -216,6 +216,17 @@ func determinant2x2(key [2][2]int) int {
 	return (k11*k22 - k12*k21)
 }
 
+func k1Inverse(k1, M int) (int, error) {
+	k1 = k1 % M
+	for i := 1; i < M; i++ {
+		if (k1*i)%M == 1 {
+			return i, nil
+		}
+	}
+
+	return -1, errors.New("no modular inverse found for determinant")
+}
+
 func inverseMatrix(key [2][2]int, power int) ([2][2]int, error) {
 	det := determinant2x2(key)
 
@@ -223,10 +234,10 @@ func inverseMatrix(key [2][2]int, power int) ([2][2]int, error) {
 		return [2][2]int{}, errors.New("matrix is singular, no inverse exists")
 	}
 
-	invDet, err := modInverse(det, power) // Модульное обратное определителя, предполагая, что работаем в поле 26
-	if err != nil {
-		return [2][2]int{}, errors.New("no modular inverse found for determinant")
-	}
+	// invDet, err := k1Inverse(det, power)
+	// if err != nil {
+	// 	return [2][2]int{}, err
+	// }
 
 	a := key[0][0]
 	b := key[0][1]
@@ -234,9 +245,10 @@ func inverseMatrix(key [2][2]int, power int) ([2][2]int, error) {
 	d := key[1][1]
 
 	inv := [2][2]int{
-		{d * invDet % 26, (-b) * invDet % power},
-		{(-c) * invDet % 26, a * invDet % power},
+		{Mod(d, power), -Mod(b, power)},
+		{-Mod(c, power), Mod(a, power)},
 	}
+	fmt.Println(inv)
 
 	return inv, nil
 }
@@ -258,21 +270,44 @@ func hillEncryptPair(k11, k12, k21, k22, p1, p2, power int) (int, int) {
 	return c1, c2
 }
 
-func Hill(input string, key [2][2]int, alphabetMap map[rune]int, power int) string {
-	key, err := inverseMatrix(key, power)
-	if err != nil {
-		fmt.Println(err)
+func gcd(a, b int) int {
+	if b == 0 {
+		return a
 	}
+	return gcd(b, a%b)
+}
+
+func Hill(input string, key [2][2]int, alphabetMap map[rune]int, power int) string {
+
+	k11 := key[0][0]
+	k12 := key[0][1]
+	k21 := key[1][0]
+	k22 := key[1][1]
+
+	detK := ((k11*k22)%power - (k12*k21)%power + power) % power
+
+	if detK == 0 || gcd(detK, power) != 1 {
+		return ""
+	}
+
+	detInverse, err := k1Inverse(detK, power)
+	if err != nil {
+		return ""
+	}
+
+	if utf8.RuneCountInString(input)%2 != 0 {
+		rand := randomRune(alphabetMap, power)
+		input += string(rand) // Добавляем символ для выравнивания
+	}
+
+	newK11 := (k22 * detInverse) % power
+	newK12 := ((-k12 + power) * detInverse) % power
+	newK21 := ((-k21 + power) * detInverse) % power
+	newK22 := (k11 * detInverse) % power
 
 	reverseAlphabetMap := make(map[int]rune)
 	for char, idx := range alphabetMap {
 		reverseAlphabetMap[idx] = char
-	}
-
-	input = strings.ToUpper(input)
-	if utf8.RuneCountInString(input)%2 != 0 {
-		rand := randomRune(alphabetMap, power)
-		input += string(rand) // Добавляем символ для выравнивания
 	}
 
 	var ciphertext strings.Builder
@@ -281,9 +316,8 @@ func Hill(input string, key [2][2]int, alphabetMap map[rune]int, power int) stri
 		p1 := alphabetMap[text[i]]
 		p2 := alphabetMap[text[i+1]]
 
-		c1, c2 := hillEncryptPair(key[0][0], key[0][1], key[1][0], key[1][1], p1, p2, power)
-		ciphertext.WriteRune(reverseAlphabetMap[c1])
-		ciphertext.WriteRune(reverseAlphabetMap[c2])
+		ciphertext.WriteRune(reverseAlphabetMap[(p1*newK11+p2*newK21)%power])
+		ciphertext.WriteRune(reverseAlphabetMap[(p1*newK12+p2*newK22)%power])
 	}
 
 	return ciphertext.String()
