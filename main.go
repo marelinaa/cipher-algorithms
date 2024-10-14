@@ -106,11 +106,14 @@ func initializeData() (string, error) {
 		return "", err
 	}
 
+	if keyString == "" {
+		return "", fmt.Errorf("key can not be empty")
+	}
+
 	return keyString, nil
 }
 
 func main() {
-
 	//fmt.Println()
 
 	keyString, err := initializeData()
@@ -164,7 +167,7 @@ func main() {
 			// Caesar cipher
 			key, err := verify.CaesarKey(keyString, alphabetMap)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			if operationChoice == 1 {
@@ -178,7 +181,7 @@ func main() {
 		case 2:
 			key, err := verify.AffineKey(keyString, alphabetMap, power)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			// Affine cipher
@@ -192,7 +195,7 @@ func main() {
 		case 3:
 			key, err := verify.SubstitutionKey(keyString, alphabetMap, power)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			// Simple substitution
@@ -207,7 +210,7 @@ func main() {
 		case 4:
 			key, err := verify.HillKey(keyString, alphabetMap, power)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			// Hill cipher
@@ -221,7 +224,7 @@ func main() {
 		case 5:
 			err := verify.PermutationKey(keyString, alphabetMap, power)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			// Permutation cipher
@@ -229,13 +232,13 @@ func main() {
 				result = encrypt.Permutation(input, keyString, alphabetMap, power)
 				WriteToFile(encryptFile, result)
 			} else {
-				result = decrypt.Permutation(input, keyString)
+				result = decrypt.Permutation(input, keyString, alphabetMap)
 				WriteToFile(decryptFile, result)
 			}
 		case 6:
 			err := verify.VigenereKey(keyString, alphabetMap, power)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			// Vigenere cipher
@@ -247,7 +250,7 @@ func main() {
 				WriteToFile(decryptFile, result)
 			}
 		default:
-			fmt.Println("Wrong choise")
+			log.Println("Wrong choise")
 			continue
 		}
 	}

@@ -91,59 +91,78 @@ func Permutation(input, keyword string, alphabetMap map[rune]int, power int) str
 	cols := utf8.RuneCountInString(keyword)
 	paddingLen := cols - (utf8.RuneCountInString(input) % cols)
 	rows := (utf8.RuneCountInString(input) + paddingLen) / cols
+	fmt.Println(rows, cols)
 
 	if utf8.RuneCountInString(input)%cols != 0 {
-		paddingLen := cols - (utf8.RuneCountInString(input) % cols)
-		paddingChar := randomRune(alphabetMap, power) //todo:change
+		paddingChar := randomRune(alphabetMap, power)
 		for i := 0; i < paddingLen; i++ {
 			input += string(paddingChar)
 		}
 	}
 
-	// Заполняем таблицу текста
-	table := make([][]rune, rows)
-	for i := range table {
-		table[i] = make([]rune, cols)
+	runes := []rune(keyword)
+	n := utf8.RuneCountInString(keyword)
+
+	// Структура для хранения букв и их исходных индексов
+	type letterIndex struct {
+		letter rune
+		index  int
 	}
 
-	for i, r := range input {
-		row := i / cols
-		col := i % cols
-		table[row][col] = r
+	// Заполняем структуру буквы и их индексы
+	letters := make([]letterIndex, n)
+	for i, r := range runes {
+		letters[i] = letterIndex{r, i}
 	}
 
-	// Добавляем буквы пароля в таблицу
-	keywordRunes := []rune(keyword)
-	colOrder := make([]int, len(keywordRunes))
-	for i := range keywordRunes {
-		colOrder[i] = i
-	}
-
-	// Сортируем индексы столбцов по алфавиту
-	sort.Slice(colOrder, func(i, j int) bool {
-		return keywordRunes[colOrder[i]] < keywordRunes[colOrder[j]]
+	// Сортируем структуру по алфавиту
+	sort.Slice(letters, func(i, j int) bool {
+		return alphabetMap[letters[i].letter] < alphabetMap[letters[j].letter]
 	})
 
-	// Переставляем столбцы в таблице
-	sortedTable := make([][]rune, rows)
-	for i := range sortedTable {
-		sortedTable[i] = make([]rune, cols)
-		for j, col := range colOrder {
-			sortedTable[i][j] = table[i][col]
+	// Создаем слайс результата
+	order := make([]int, n)
+	for sortedIndex, li := range letters {
+		order[li.index] = sortedIndex
+	}
+
+	fmt.Println(order)
+
+	table := make([][]rune, rows)
+	inputRunes := []rune(input)
+	idx := 0
+	for i := 0; i < rows; i++ {
+		table[i] = make([]rune, cols)
+		for j := 0; j < cols; j++ {
+			table[i][j] = inputRunes[idx]
+			idx++
 		}
+	}
+
+	// Переставляем элементы каждой строки в соответствии с порядком из слайса order
+	for i := 0; i < rows; i++ {
+		table[i] = rearrangeRow(table[i], order)
 	}
 
 	// Создаем шифротекст, проходя по строкам
 	var cipherText strings.Builder
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			if sortedTable[i][j] != 0 { // Игнорируем пустые ячейки
-				cipherText.WriteRune(sortedTable[i][j])
+			if table[i][j] != 0 { // Игнорируем пустые ячейки
+				cipherText.WriteRune(table[i][j])
 			}
 		}
 	}
 
 	return cipherText.String()
+}
+
+func rearrangeRow(row []rune, order []int) []rune {
+	rearranged := make([]rune, len(row))
+	for i, pos := range order {
+		rearranged[pos] = row[i]
+	}
+	return rearranged
 }
 
 func Vigenere(input string, key string, alphabetMap map[rune]int, power int) string {
@@ -184,9 +203,21 @@ func modInverse(a, m int) (int, error) {
 	return 0, errors.New("no modular inverse exists")
 }
 
+func Mod(x, y int) int {
+	if x < 0 {
+		a := -x / y
+		fmt.Println(a)
+
+		return ((a)+1)*y + x
+	}
+
+	return x - (x/y)*y
+}
+
 func hillEncryptPair(k11, k12, k21, k22, p1, p2, power int) (int, int) {
-	c1 := (k11*p1 + k21*p2) % power
-	c2 := (k12*p1 + k22*p2) % power
+	c1 := Mod(k11*p1+k21*p2, power)
+	c2 := Mod(k12*p1+k22*p2, power)
+
 	return c1, c2
 }
 

@@ -60,6 +60,36 @@ func CaesarKey(key string, alphabetMap map[rune]int) (int, error) {
 	return k, nil
 }
 
+func AffineKey(key string, alphabetMap map[rune]int, power int) (keys.Affine, error) {
+	err := "affine key must be a pair of symbols from the alphabet, without delimiters"
+	keyRunes := []rune(key)
+	if len(keyRunes) != 2 {
+		return keys.Affine{}, fmt.Errorf(err)
+	}
+
+	k1, ok := alphabetMap[keyRunes[0]]
+	if !ok {
+		return keys.Affine{}, fmt.Errorf(err)
+	}
+	k2, ok := alphabetMap[keyRunes[1]]
+	if !ok {
+		return keys.Affine{}, fmt.Errorf(err)
+	}
+
+	fmt.Println(k1, k2)
+
+	if !areCoprime(k1, power) {
+		return keys.Affine{}, fmt.Errorf("numeric representations of symbols must be coprime")
+	}
+
+	affineKey := keys.Affine{
+		K1: k1,
+		K2: k2,
+	}
+
+	return affineKey, nil
+}
+
 func SubstitutionKey(key string, alphabetMap map[rune]int, power int) ([]int, error) {
 	var keyInt []int
 	seen := make(map[rune]bool) // to track repeated characters
@@ -89,46 +119,26 @@ func SubstitutionKey(key string, alphabetMap map[rune]int, power int) ([]int, er
 }
 
 func gcd(a, b int) int {
-	if b == 0 {
+	switch {
+	case a == 0 && b == 0:
+		return 0
+	case a == 0:
+		return b
+	case b == 0:
 		return a
-	} else {
-		return gcd(b, a%b)
+	case a%b == 0:
+		return b
+	case b%a == 0:
+		return a
+	case a > b:
+		return gcd(a%b, b)
 	}
+
+	return gcd(a, b%a)
 }
 
 func areCoprime(a, b int) bool {
-	// If the GCD of two numbers is 1, they are coprime
 	return gcd(a, b) == 1
-}
-
-func AffineKey(key string, alphabetMap map[rune]int, power int) (keys.Affine, error) {
-	err := "affine key must be a pair of symbols from the alphabet, witout delimiters"
-	keyRunes := []rune(key)
-	if len(keyRunes) != 2 {
-		return keys.Affine{}, fmt.Errorf(err)
-	}
-
-	k1, ok := alphabetMap[keyRunes[0]]
-	if !ok {
-		return keys.Affine{}, fmt.Errorf(err)
-	}
-	k2, ok := alphabetMap[keyRunes[1]]
-	if !ok {
-		return keys.Affine{}, fmt.Errorf(err)
-	}
-
-	fmt.Println(k1, k2)
-
-	if !areCoprime(k1, power) {
-		return keys.Affine{}, fmt.Errorf("numeric representations of symbols must be coprime")
-	}
-
-	affineKey := keys.Affine{
-		K1: k1,
-		K2: k2,
-	}
-
-	return affineKey, nil
 }
 
 func IsControl(r rune) bool {
@@ -167,6 +177,10 @@ func HillKey(keyString string, alphabetMap map[rune]int, power int) ([2][2]int, 
 	var key [2][2]int
 	var keyNum []int
 
+	if utf8.RuneCountInString(keyString) != 4 {
+		return [2][2]int{}, fmt.Errorf("key must contain 4 symbols from the alphabet")
+	}
+
 	for _, r := range keyString {
 		i, ok := alphabetMap[r]
 		if !ok {
@@ -175,8 +189,6 @@ func HillKey(keyString string, alphabetMap map[rune]int, power int) ([2][2]int, 
 
 		keyNum = append(keyNum, i)
 	}
-
-	fmt.Println(keyNum)
 
 	index := 0
 	for i := 0; i < len(key); i++ {

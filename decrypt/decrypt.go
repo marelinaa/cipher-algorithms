@@ -3,6 +3,7 @@ package decrypt
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -17,14 +18,14 @@ func Caesar(input string, key int, alphabetMap map[rune]int, power int) string {
 	return encrypt.Caesar(input, -key, alphabetMap, power)
 }
 
-func ModInverse(a, m int) int {
+func modInverse(a, m int) (int, error) {
+	a = a % m
 	for x := 1; x < m; x++ {
 		if (a*x)%m == 1 {
-			return x
+			return x, nil
 		}
 	}
-	// Return -1 if no modular inverse is found, though this would ideally not happen if K1 and power are coprime.
-	return -1
+	return 0, errors.New("no modular inverse exists")
 }
 
 func Affine(input string, key keys.Affine, alphabetMap map[rune]int, power int) string {
@@ -36,8 +37,8 @@ func Affine(input string, key keys.Affine, alphabetMap map[rune]int, power int) 
 	}
 
 	// Find modular inverse of key.K1
-	k1Inverse := ModInverse(key.K1, power)
-	if k1Inverse == -1 {
+	k1Inverse, err := modInverse(key.K1, power)
+	if err != nil {
 		panic("K1 has no modular inverse, decryption is not possible!")
 	}
 
@@ -84,68 +85,90 @@ func Substitution(input string, key []rune, alphabetMap map[rune]int, power int)
 	return string(decryptedText)
 }
 
-// Функция расшифрования методом перестановки с паролем
-func Permutation(input, keyword string) string {
+func Permutation(input, keyword string, alphabetMap map[rune]int) string {
 	cols := utf8.RuneCountInString(keyword)
-	rows := utf8.RuneCountInString(input) / cols
-
+	paddingLen := cols - (utf8.RuneCountInString(input) % cols)
+	rows := (utf8.RuneCountInString(input) + paddingLen) / cols
+	// Проверяем, нужно ли добавить символы для выравнивания
 	if utf8.RuneCountInString(input)%cols != 0 {
-		fmt.Println("the length of the ciphertext must be a multiple of the length of the key")
-
-		return ""
+		log.Println("длина шифртекста не кратна длине ключа")
 	}
 
-	// Заполняем таблицу зашифрованного текста
-	sortedTable := make([][]rune, rows)
-	for i := range sortedTable {
-		sortedTable[i] = make([]rune, cols)
+	// Получаем порядок перестановки
+	order := getKeywordOrder(keyword, alphabetMap)
+	fmt.Println("Порядок перестановки:", order)
+
+	// Получаем обратный порядок перестановки
+	reverseOrder := make([]int, len(order))
+	for i, pos := range order {
+		reverseOrder[pos] = i
 	}
+	fmt.Println("Обратный порядок перестановки:", reverseOrder)
 
-	// Добавляем буквы зашифрованного текста в таблицу
-	for i, r := range input {
-		row := i / cols
-		col := i % cols
-		sortedTable[row][col] = r
-	}
-
-	// Добавляем буквы пароля в таблицу
-	keywordRunes := []rune(keyword)
-	colOrder := make([]int, len(keywordRunes))
-	for i := range keywordRunes {
-		colOrder[i] = i
-	}
-
-	// Сортируем индексы столбцов по алфавиту
-	sort.Slice(colOrder, func(i, j int) bool {
-		return keywordRunes[colOrder[i]] < keywordRunes[colOrder[j]]
-	})
-
-	// Создаем обратный порядок для расшифровки
-	inverseColOrder := make([]int, len(colOrder))
-	for i, col := range colOrder {
-		inverseColOrder[col] = i
-	}
-
-	// Восстанавливаем оригинальную таблицу
-	originalTable := make([][]rune, rows)
-	for i := range originalTable {
-		originalTable[i] = make([]rune, cols)
-		for j, col := range inverseColOrder {
-			originalTable[i][j] = sortedTable[i][col]
+	// Создаем таблицу для расшифровки
+	table := make([][]rune, rows)
+	inputRunes := []rune(input)
+	idx := 0
+	for i := 0; i < rows; i++ {
+		table[i] = make([]rune, cols)
+		for j := 0; j < cols; j++ {
+			table[i][j] = inputRunes[idx]
+			idx++
 		}
 	}
 
-	// Извлекаем исходный текст, проходя по строкам
-	var originalText strings.Builder
+	// Восстанавливаем исходный порядок в каждой строке
+	for i := 0; i < rows; i++ {
+		table[i] = rearrangeRow(table[i], reverseOrder)
+	}
+
+	// Собираем исходный текст
+	var plainText strings.Builder
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			if originalTable[i][j] != 0 {
-				originalText.WriteRune(originalTable[i][j])
+			if table[i][j] != 'X' { // Игнорируем символы заполнения
+				plainText.WriteRune(table[i][j])
 			}
 		}
 	}
 
-	return originalText.String()
+	return plainText.String()
+}
+
+// Функция для получения порядка перестановки по алфавиту
+func getKeywordOrder(keyword string, alphabetMap map[rune]int) []int {
+	runes := []rune(keyword)
+	n := len(runes)
+
+	type letterIndex struct {
+		letter rune
+		index  int
+	}
+
+	letters := make([]letterIndex, n)
+	for i, r := range runes {
+		letters[i] = letterIndex{r, i}
+	}
+
+	sort.Slice(letters, func(i, j int) bool {
+		return alphabetMap[letters[i].letter] < alphabetMap[letters[j].letter]
+	})
+
+	result := make([]int, n)
+	for sortedIndex, li := range letters {
+		result[li.index] = sortedIndex
+	}
+
+	return result
+}
+
+// Функция для перестановки элементов строки в соответствии с порядком order
+func rearrangeRow(row []rune, order []int) []rune {
+	rearranged := make([]rune, len(row))
+	for i, pos := range order {
+		rearranged[pos] = row[i]
+	}
+	return rearranged
 }
 
 func Vigenere(input string, key string, alphabetMap map[rune]int, power int) string {
@@ -200,12 +223,12 @@ func inverseMatrix(key [2][2]int, power int) ([2][2]int, error) {
 	det := determinant2x2(key)
 
 	if det == 0 {
-		return [2][2]int{}, errors.New("Matrix is singular, no inverse exists")
+		return [2][2]int{}, errors.New("matrix is singular, no inverse exists")
 	}
 
-	invDet := ModInverse(det, power) // Модульное обратное определителя, предполагая, что работаем в поле 26
-	if invDet == -1 {
-		return [2][2]int{}, errors.New("No modular inverse found for determinant")
+	invDet, err := modInverse(det, power) // Модульное обратное определителя, предполагая, что работаем в поле 26
+	if err != nil {
+		return [2][2]int{}, errors.New("no modular inverse found for determinant")
 	}
 
 	a := key[0][0]
@@ -221,20 +244,28 @@ func inverseMatrix(key [2][2]int, power int) ([2][2]int, error) {
 	return inv, nil
 }
 
+func Mod(x, y int) int {
+	if x < 0 {
+		a := -x / y
+
+		return ((a)+1)*y + x
+	}
+
+	return x - (x/y)*y
+}
+
 func hillEncryptPair(k11, k12, k21, k22, p1, p2, power int) (int, int) {
-	c1 := (k11*p1 + k21*p2) % power
-	c2 := (k12*p1 + k22*p2) % power
+	c1 := Mod(k11*p1+k21*p2, power)
+	c2 := Mod(k12*p1+k22*p2, power)
+
 	return c1, c2
 }
 
 func Hill(input string, key [2][2]int, alphabetMap map[rune]int, power int) string {
-	fmt.Println(key)
 	key, err := inverseMatrix(key, power)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	fmt.Println(key)
 
 	reverseAlphabetMap := make(map[int]rune)
 	for char, idx := range alphabetMap {
